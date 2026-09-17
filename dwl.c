@@ -231,6 +231,7 @@ struct Monitor {
 	int gamma_lut_changed;
 	int nmaster;
 	char ltsymbol[16];
+	Client *prevc;
 	int asleep;
 };
 
