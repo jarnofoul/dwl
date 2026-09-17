@@ -372,7 +372,6 @@ static void tile(Monitor *m);
 static void togglefloating(const Arg *arg);
 static void togglefullscreen(const Arg *arg);
 static void toggleswallow(const Arg *arg);
-static void toggleautoswallow(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
 static void unlocksession(struct wl_listener *listener, void *data);
@@ -3194,12 +3193,6 @@ toggleswallow(const Arg *arg)
 		}
 		swallow(sel, c);
 	}
-}
-
-void
-toggleautoswallow(const Arg *arg)
-{
-	enableautoswallow = !enableautoswallow;
 }
 
 void
