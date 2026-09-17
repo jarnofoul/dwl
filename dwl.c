@@ -420,6 +420,7 @@ static struct wlr_cursor_shape_manager_v1 *cursor_shape_mgr;
 static struct wlr_output_power_manager_v1 *power_mgr;
 static struct wlr_ext_foreign_toplevel_list_v1 *foreign_toplevel_list;
 static struct wlr_ext_foreign_toplevel_image_capture_source_manager_v1 *ext_foreign_toplevel_image_capture_source_manager_v1;
+static struct wlr_pointer_gestures_v1 *pointer_gestures;
 
 static struct wlr_pointer_constraints_v1 *pointer_constraints;
 static struct wlr_relative_pointer_manager_v1 *relative_pointer_mgr;
