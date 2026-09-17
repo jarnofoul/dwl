@@ -47,6 +47,7 @@
 #include <wlr/types/wlr_output_swapchain_manager.h>
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_pointer_constraints_v1.h>
+#include <wlr/types/wlr_pointer_gestures_v1.h>
 #include <wlr/types/wlr_presentation_time.h>
 #include <wlr/types/wlr_primary_selection.h>
 #include <wlr/types/wlr_primary_selection_v1.h>
@@ -265,6 +266,7 @@ static void arrange(Monitor *m);
 static void arrangelayer(Monitor *m, struct wl_list *list,
 		struct wlr_box *usable_area, int exclusive);
 static void arrangelayers(Monitor *m);
+static void assignkeymap(struct wlr_keyboard *keyboard);
 static void axisnotify(struct wl_listener *listener, void *data);
 static void buttonpress(struct wl_listener *listener, void *data);
 static void capturerequest(struct wl_listener *listener, void *data);
@@ -310,6 +312,7 @@ static void fullscreennotify(struct wl_listener *listener, void *data);
 static void gpureset(struct wl_listener *listener, void *data);
 static void handlesig(int signo);
 static void incnmaster(const Arg *arg);
+static void incxkbrules(const Arg *arg);
 static void inputdevice(struct wl_listener *listener, void *data);
 static const Key *keybinding(uint32_t mods, xkb_keysym_t sym);
 static void keypress(struct wl_listener *listener, void *data);
@@ -349,6 +352,7 @@ static void setmon(Client *c, Monitor *m, uint32_t newtags);
 static void setpsel(struct wl_listener *listener, void *data);
 static void setsel(struct wl_listener *listener, void *data);
 static void setup(void);
+static void setxkbrules(const Arg *arg);
 static void spawn(const Arg *arg);
 static void startdrag(struct wl_listener *listener, void *data);
 static void tag(const Arg *arg);
@@ -419,6 +423,7 @@ static struct wlr_session_lock_v1 *cur_lock;
 
 static struct wlr_seat *seat;
 static KeyboardGroup *kb_group;
+static unsigned int kblayout = 0;
 static unsigned int cursor_mode;
 static Client *grabc;
 static int grabcx, grabcy; /* client-relative */
@@ -642,6 +647,20 @@ arrangelayers(Monitor *m)
 }
 
 void
+assignkeymap(struct wlr_keyboard *keyboard) {
+	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+	struct xkb_keymap *keymap = xkb_keymap_new_from_names(context, &xkb_rules[kblayout],
+					XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+	if (!keymap)
+		die("failed to compile keymap");
+
+	wlr_keyboard_set_keymap(keyboard, keymap);
+	xkb_keymap_unref(keymap);
+	xkb_context_unref(context);
+}
+
+void
 axisnotify(struct wl_listener *listener, void *data)
 {
 	/* This event is forwarded by the cursor when a pointer emits an axis event,
@@ -749,6 +768,122 @@ capturerequest(struct wl_listener *listener, void *data)
 
 	wlr_ext_foreign_toplevel_image_capture_source_manager_v1_request_accept(
 		request, view->image_capture_source);
+}
+
+void
+swipe_begin(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_swipe_begin_event *event = data;
+
+	// Forward swipe begin event to client
+	wlr_pointer_gestures_v1_send_swipe_begin(
+		pointer_gestures, 
+		seat,
+		event->time_msec,
+		event->fingers
+	);
+}
+
+void
+swipe_update(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_swipe_update_event *event = data;
+
+	// Forward swipe update event to client
+	wlr_pointer_gestures_v1_send_swipe_update(
+		pointer_gestures, 
+		seat,
+		event->time_msec,
+		event->dx,
+		event->dy
+	);
+}
+
+void
+swipe_end(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_swipe_end_event *event = data;
+
+	// Forward swipe end event to client
+	wlr_pointer_gestures_v1_send_swipe_end(
+		pointer_gestures, 
+		seat,
+		event->time_msec,
+		event->cancelled
+	);
+}
+
+void
+pinch_begin(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_pinch_begin_event *event = data;
+
+	// Forward pinch begin event to client
+	wlr_pointer_gestures_v1_send_pinch_begin(
+		pointer_gestures, 
+		seat,
+		event->time_msec,
+		event->fingers
+	);
+}
+
+void
+pinch_update(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_pinch_update_event *event = data;
+
+	// Forward pinch update event to client
+	wlr_pointer_gestures_v1_send_pinch_update(
+		pointer_gestures,
+		seat,
+		event->time_msec,
+		event->dx,
+		event->dy,
+		event->scale,
+		event->rotation
+	);
+}
+
+void
+pinch_end(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_pinch_end_event *event = data;
+
+	// Forward pinch end event to client
+	wlr_pointer_gestures_v1_send_pinch_end(
+		pointer_gestures,
+		seat,
+		event->time_msec,
+		event->cancelled
+	);
+}
+
+void
+hold_begin(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_hold_begin_event *event = data;
+
+	// Forward hold begin event to client
+	wlr_pointer_gestures_v1_send_hold_begin(
+		pointer_gestures,
+		seat,
+		event->time_msec,
+		event->fingers
+	);
+}
+
+void
+hold_end(struct wl_listener *listener, void *data)
+{
+	struct wlr_pointer_hold_end_event *event = data;
+
+	// Forward hold end event to client
+	wlr_pointer_gestures_v1_send_hold_end(
+		pointer_gestures,
+		seat,
+		event->time_msec,
+		event->cancelled
+	);
 }
 
 void
@@ -1038,21 +1173,11 @@ KeyboardGroup *
 createkeyboardgroup(void)
 {
 	KeyboardGroup *group = ecalloc(1, sizeof(*group));
-	struct xkb_context *context;
-	struct xkb_keymap *keymap;
 
 	group->wlr_group = wlr_keyboard_group_create();
 	group->wlr_group->data = group;
 
-	/* Prepare an XKB keymap and assign it to the keyboard group. */
-	context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-	if (!(keymap = xkb_keymap_new_from_names(context, &xkb_rules,
-				XKB_KEYMAP_COMPILE_NO_FLAGS)))
-		die("failed to compile keymap");
-
-	wlr_keyboard_set_keymap(&group->wlr_group->keyboard, keymap);
-	xkb_keymap_unref(keymap);
-	xkb_context_unref(context);
+	assignkeymap(&group->wlr_group->keyboard);
 
 	wlr_keyboard_set_repeat_info(&group->wlr_group->keyboard, repeat_rate, repeat_delay);
 
@@ -1669,6 +1794,13 @@ incnmaster(const Arg *arg)
 		return;
 	selmon->nmaster = MAX(selmon->nmaster + arg->i, 0);
 	arrange(selmon);
+}
+
+void
+incxkbrules(const Arg *arg)
+{
+	kblayout = (kblayout + arg->i) % LENGTH(xkb_rules);
+	assignkeymap(&kb_group->wlr_group->keyboard);
 }
 
 void
@@ -2782,6 +2914,16 @@ setup(void)
     wl_signal_add(&virtual_pointer_mgr->events.new_virtual_pointer,
             &new_virtual_pointer);
 
+	pointer_gestures = wlr_pointer_gestures_v1_create(dpy);
+	LISTEN_STATIC(&cursor->events.swipe_begin, swipe_begin);
+	LISTEN_STATIC(&cursor->events.swipe_update, swipe_update);
+	LISTEN_STATIC(&cursor->events.swipe_end, swipe_end);
+	LISTEN_STATIC(&cursor->events.pinch_begin, pinch_begin);
+	LISTEN_STATIC(&cursor->events.pinch_update, pinch_update);
+	LISTEN_STATIC(&cursor->events.pinch_end, pinch_end);
+	LISTEN_STATIC(&cursor->events.hold_begin, hold_begin);
+	LISTEN_STATIC(&cursor->events.hold_end, hold_end);
+
 	seat = wlr_seat_create(dpy, "seat0");
 	wl_signal_add(&seat->events.request_set_cursor, &request_cursor);
 	wl_signal_add(&seat->events.request_set_selection, &request_set_sel);
@@ -2819,6 +2961,13 @@ setup(void)
 		fprintf(stderr, "failed to setup XWayland X server, continuing without it\n");
 	}
 #endif
+}
+
+void
+setxkbrules(const Arg *arg)
+{
+	kblayout = arg->i;
+	assignkeymap(&kb_group->wlr_group->keyboard);
 }
 
 void
