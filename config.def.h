@@ -17,6 +17,7 @@ static const float focuscolor[]            = COLOR(0x005577ff);
 static const float urgentcolor[]           = COLOR(0xff0000ff);
 /* This conforms to the xdg-protocol. Set the alpha to zero to restore the old behavior */
 static const float fullscreen_bg[]         = {0.0f, 0.0f, 0.0f, 1.0f}; /* You can also use glsl colors */
+static const int respect_monitor_reserved_area = 0;  /* 1 to monitor center while respecting the monitor's reserved area, 0 to monitor center */
 static const char *cursor_theme            = NULL;
 static const char cursor_size[]            = "24"; /* Make sure it's a valid integer, otherwise things will break */
 static int enableautoswallow = 1; /* enables autoswallowing newly spawned clients */
@@ -35,10 +36,10 @@ static const char *const autostart[] = {
 };
 
 static const Rule rules[] = {
-	/* app_id             title       tags mask     isfloating   isterm   noswallow   monitor */
-	{ "foot",             NULL,       0,            0,           1,       1,          -1 },
-	{ "Gimp_EXAMPLE",     NULL,       0,            1,           0,       0,          -1 }, /* Start on currently visible tags floating, not tiled */
-	{ "firefox_EXAMPLE",  NULL,       1 << 8,       0,           0,       0,          -1 }, /* Start on ONLY tag "9" */
+	/* app_id             title       tags mask     isfloating   isterm   noswallow   monitor	x	y	width	height */
+	{ "foot",             NULL,       0,            0,           1,       1,          -1,		-1,	-1,	1000,	0.75},
+	{ "Gimp_EXAMPLE",     NULL,       0,            1,           0,       0,          -1, 		-1,	-1,	-1,	-1}, /* Start on currently visible tags floating, not tiled */
+	{ "firefox_EXAMPLE",  NULL,       1 << 8,       0,           0,       0,          -1, 		-1,	-1,	-1,	-1}, /* Start on ONLY tag "9" */
     /* default/example rule: can be changed but cannot be eliminated; at least one rule must exist */
 };
 
