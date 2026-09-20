@@ -4246,6 +4246,7 @@ main(int argc, char *argv[])
 	if (!getenv("XDG_RUNTIME_DIR"))
 		die("XDG_RUNTIME_DIR must be set");
 	setup();
+    loadtheme(colorfile);
 	run(startup_cmd);
 	cleanup();
 	return EXIT_SUCCESS;
