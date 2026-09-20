@@ -180,6 +180,7 @@ struct Client {
 
 typedef struct {
 	uint32_t mod;
+	int chain;
 	xkb_keysym_t keysym;
 	void (*func)(const Arg *);
 	const Arg arg;
@@ -424,6 +425,7 @@ static pid_t child_pid = -1;
 static int locked;
 static uint32_t locked_mods = 0;
 static void *exclusive_focus;
+static int chainkey = -1;
 static struct wl_display *dpy;
 static struct wl_event_loop *event_loop;
 static struct wlr_backend *backend;
@@ -2180,9 +2182,26 @@ keybinding(uint32_t mods, xkb_keysym_t sym)
 	 */
 	const Key *k;
 	for (k = keys; k < END(keys); k++) {
-		if (CLEANMASK(mods) == CLEANMASK(k->mod) && sym == k->keysym && k->func)
+		if (CLEANMASK(mods) == CLEANMASK(k->mod) && sym == k->keysym
+				&& chainkey == -1
+				&& k->chain == -1
+				&& k->func) {
 			return k;
+		} else if (CLEANMASK(mods) == CLEANMASK(k->mod) && sym == k->keysym
+				&& chainkey != -1
+				&& k->chain == chainkey
+				&& k->func) {
+			chainkey = -1;
+			return k;
+		} else if (CLEANMASK(mods) == CLEANMASK(k->mod)
+				&& k->chain == (int)sym
+				&& chainkey == -1
+				&& k->func) {
+			chainkey = sym;
+			return k;
+		}
 	}
+	chainkey = -1;
 	return NULL;
 }
 
@@ -2231,7 +2250,9 @@ keypress(struct wl_listener *listener, void *data)
 			}
 			if (key) {
 				consumed[event->keycode] = 1;
-				key->func(&key->arg);
+				if (chainkey == -1) {
+					key->func(&key->arg);
+				}
 				handled = 1;
 				break;
 			}
