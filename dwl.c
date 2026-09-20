@@ -611,7 +611,7 @@ applyrules(Client *c)
 					newwidth  = (int)round((r->w >= 0) ? (r->w <= 1 ? b.width  * r->w       : r->w)       : c->geom.width);
 					newheight = (int)round((r->h >= 0) ? (r->h <= 1 ? b.height * r->h       : r->h)       : c->geom.height);
 					newx      = (int)round((r->x != 0) ? ((r->x > 0) ? (r->x <= 1 ? b.width  * r->x + b.x : r->x + b.x) : c->geom.x) : (b.width  - newwidth )/2 + b.x);
-					newy      = (int)round((r->x != 0) ? ((r->y > 0) ? (r->y <= 1 ? b.height * r->y + b.y : r->y + b.y) : c->geom.y) : (b.height - newheight)/2 + b.y);
+					newy      = (int)round((r->y != 0) ? ((r->y > 0) ? (r->y <= 1 ? b.height * r->y + b.y : r->y + b.y) : c->geom.y) : (b.height - newheight)/2 + b.y);
 					apply_resize = 1;
 				}
 			}
@@ -3129,6 +3129,8 @@ setfloating(Client *c, int floating)
 void
 setfullscreen(Client *c, int fullscreen)
 {
+	Client *p;
+
 	c->isfullscreen = fullscreen;
 	if (!c->mon || !client_surface(c)->mapped)
 		return;
@@ -3144,6 +3146,9 @@ setfullscreen(Client *c, int fullscreen)
 		/* restore previous size instead of arrange for floating windows since
 		 * client positions are set by the user and cannot be recalculated */
 		resize(c, c->prev, 0);
+		wl_list_for_each(p, &clients, link)
+			if (VISIBLEON(p, selmon) && p->isfullscreen)
+				setfullscreen(p, 0);
 	}
 	arrange(c->mon);
 	printstatus();
