@@ -2044,8 +2044,19 @@ incnmaster(const Arg *arg)
 void
 incxkbrules(const Arg *arg)
 {
+	FILE *f;
+
 	kblayout = (kblayout + arg->i) % LENGTH(xkb_rules);
 	assignkeymap(&kb_group->wlr_group->keyboard);
+	if (*kblayout_file && (f = fopen(kblayout_file, "w"))) {
+        fprintf(f, "%s\n%s", xkb_rules[kblayout].layout,
+                xkb_rules[kblayout].options);
+        fclose(f);
+    }
+    if (kblayout_cmd[0] && fork() == 0) {
+        execvp(kblayout_cmd[0], (char *const *)kblayout_cmd);
+        die("dwl: execvp %s failed:", kblayout_cmd[0]);
+    }
 }
 
 void
