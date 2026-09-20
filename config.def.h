@@ -28,6 +28,12 @@ static float swallowborder = 1.0f; /* add this multiplied by borderpx to border 
 /* logging */
 static int log_level = WLR_ERROR;
 
+/* Autostart */
+static const char *const autostart[] = {
+        "wbg", "/path/to/your/image", NULL,
+        NULL /* terminate */
+};
+
 static const Rule rules[] = {
 	/* app_id             title       tags mask     isfloating   isterm   noswallow   monitor */
 	{ "foot",             NULL,       0,            0,           1,       1,          -1 },
