@@ -2117,8 +2117,9 @@ incxkbrules(const Arg *arg)
 	kblayout = (kblayout + arg->i) % LENGTH(xkb_rules);
 	assignkeymap(&kb_group->wlr_group->keyboard);
 	if (*kblayout_file && (f = fopen(kblayout_file, "w"))) {
-        fprintf(f, "%s\n%s", xkb_rules[kblayout].layout,
-                xkb_rules[kblayout].options);
+		fprintf(f, "%s\n%s",
+				xkb_rules[kblayout].layout ? xkb_rules[kblayout].layout : "",
+				xkb_rules[kblayout].options ? xkb_rules[kblayout].options : "");
         fclose(f);
     }
     if (kblayout_cmd[0] && fork() == 0) {

@@ -22,6 +22,7 @@ static const char *cursor_theme            = NULL;
 static const char cursor_size[]            = "24"; /* Make sure it's a valid integer, otherwise things will break */
 static int enableautoswallow = 1; /* enables autoswallowing newly spawned clients */
 static float swallowborder = 1.0f; /* add this multiplied by borderpx to border when a client is swallowed */
+static float stickyborder = 1.0f; /* add this multiplied by borderpx to border when a client is sticky */
 
 /* keyboard layout change notification for status bar */
 static const char  kblayout_file[] = "/tmp/dwl-keymap";
