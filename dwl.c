@@ -3554,6 +3554,7 @@ virtualpointer(struct wl_listener *listener, void *data)
 
 void
 warpcursor(const Client *c) {
+	double offset;
 	if (cursor_mode != CurNormal) {
 		return;
 	}
