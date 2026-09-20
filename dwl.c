@@ -161,8 +161,8 @@ struct Client {
 #endif
 	unsigned int bw;
 	uint32_t tags;
-	int isfloating, isurgent, isfullscreen, issticky;
-	int isterm, noswallow;
+	int isfloating, isurgent, isfullscreen, isfakefullscreen;
+	int isterm, noswallow, issticky;
 	pid_t pid;
 	Client *swallowing;  /* client being hidden */
 	Client *swallowedby;
@@ -359,6 +359,7 @@ static void setcursor(struct wl_listener *listener, void *data);
 static void setcursorshape(struct wl_listener *listener, void *data);
 static void setfloating(Client *c, int floating);
 static void setfullscreen(Client *c, int fullscreen);
+static void setfakefullscreen(Client *c, int fullscreen);
 static void setsticky(Client *c, int sticky);
 static void setlayout(const Arg *arg);
 static void setmfact(const Arg *arg);
@@ -377,6 +378,7 @@ static void tile(Monitor *m);
 static void togglefloating(const Arg *arg);
 static void togglesticky(const Arg *arg);
 static void togglefullscreen(const Arg *arg);
+static void togglefakefullscreen(const Arg *arg);
 static void togglegaps(const Arg *arg);
 static void toggleswallow(const Arg *arg);
 static void toggletag(const Arg *arg);
@@ -2188,6 +2190,15 @@ parentpid(pid_t pid)
 }
 
 void
+setfakefullscreen(Client *c, int fullscreen)
+{
+	c->isfakefullscreen = fullscreen;
+	if (!c->mon)
+		return;
+	client_set_fullscreen(c, fullscreen);
+}
+
+void
 motionabsolute(struct wl_listener *listener, void *data)
 {
 	/* This event is forwarded by the cursor when a pointer emits an _absolute_
@@ -3250,8 +3261,10 @@ void
 togglefullscreen(const Arg *arg)
 {
 	Client *sel = focustop(selmon);
-	if (sel)
+	if (sel) {
 		setfullscreen(sel, !sel->isfullscreen);
+        setfakefullscreen(sel, sel->isfakefullscreen);
+	}
 }
 
 void
@@ -3289,6 +3302,14 @@ togglesticky(const Arg *arg)
 		return;
 
 	setsticky(c, !c->issticky);
+}
+
+void
+togglefakefullscreen(const Arg *arg)
+{
+	Client *sel = focustop(selmon);
+	if (sel)
+		setfakefullscreen(sel, !sel->isfakefullscreen);
 }
 
 void
