@@ -326,6 +326,7 @@ static void incnmaster(const Arg *arg);
 static void incxkbrules(const Arg *arg);
 static void inputdevice(struct wl_listener *listener, void *data);
 static const Key *keybinding(uint32_t mods, xkb_keysym_t sym);
+static const Key *lockedkeybinding(uint32_t mods, xkb_keysym_t sym);
 static void keypress(struct wl_listener *listener, void *data);
 static void keypressmod(struct wl_listener *listener, void *data);
 static int keyrepeat(void *data);
@@ -1911,6 +1912,18 @@ keybinding(uint32_t mods, xkb_keysym_t sym)
 	return NULL;
 }
 
+const Key*
+lockedkeybinding(uint32_t mods, xkb_keysym_t sym)
+{
+	const Key *k;
+	for (k = lockedkeys; k < END(lockedkeys); k++) {
+		if (CLEANMASK(mods) == CLEANMASK(k->mod) && sym == k->keysym && k->func) {
+			return k;
+		}
+	}
+	return NULL;
+}
+
 void
 keypress(struct wl_listener *listener, void *data)
 {
@@ -1933,11 +1946,15 @@ keypress(struct wl_listener *listener, void *data)
 
 	wlr_idle_notifier_v1_notify_activity(idle_notifier, seat);
 
-	/* On _press_ if there is no active screen locker,
-	 * attempt to process a compositor keybinding. */
-	if (!locked && event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+	/* On _press_ attempt to process a compositor keybinding. */
+	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
 		for (int i = 0; i < 2; i++) {
-			const Key *key = keybinding(group->mods, group->keysyms[i]);
+			const Key *key;
+			if (locked) {
+				key = lockedkeybinding(group->mods, group->keysyms[i]);
+			} else {
+				key = keybinding(group->mods, group->keysyms[i]);
+			}
 			if (key) {
 				consumed[event->keycode] = 1;
 				key->func(&key->arg);
