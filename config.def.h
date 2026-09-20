@@ -28,6 +28,8 @@ static float stickyborder = 1.0f; /* add this multiplied by borderpx to border w
 static const char  kblayout_file[] = "/tmp/dwl-keymap";
 static const char *kblayout_cmd[] = {"pkill", "-RTMIN+16", "someblocks", NULL};
 
+static const char *updatemon_cmd[] = {"touch", "/tmp/updatemon", NULL};
+
 static const unsigned int swipe_min_threshold = 0;
 
 /* tagging - TAGCOUNT must be no greater than 31 */

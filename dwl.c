@@ -1219,6 +1219,12 @@ closemon(Monitor *m)
 		if (c->mon == m)
 			setmon(c, selmon, c->tags);
 	}
+
+    if (updatemon_cmd[0] && fork() == 0) {
+        execvp(updatemon_cmd[0], (char *const *)updatemon_cmd);
+        die("dwl: execvp %s failed:", updatemon_cmd[0]);
+    }
+
 	focusclient(focustop(selmon), 1);
 	printstatus();
 }
@@ -1483,6 +1489,12 @@ createmon(struct wl_listener *listener, void *data)
 	 * monitor's preferred mode; a more sophisticated compositor would let
 	 * the user configure it. */
 	wlr_output_state_set_mode(&state, wlr_output_preferred_mode(wlr_output));
+
+    if (updatemon_cmd[0] && fork() == 0) {
+        execvp(updatemon_cmd[0], (char *const *)updatemon_cmd);
+        die("dwl: execvp %s failed:", updatemon_cmd[0]);
+    }
+
 
 	/* Set up event listeners */
 	LISTEN(&wlr_output->events.frame, &m->frame, rendermon);
