@@ -27,6 +27,8 @@ static float swallowborder = 1.0f; /* add this multiplied by borderpx to border 
 static const char  kblayout_file[] = "/tmp/dwl-keymap";
 static const char *kblayout_cmd[] = {"pkill", "-RTMIN+16", "someblocks", NULL};
 
+static const unsigned int swipe_min_threshold = 0;
+
 /* tagging - TAGCOUNT must be no greater than 31 */
 #define TAGCOUNT (9)
 
@@ -230,4 +232,11 @@ static const Button buttons[] = {
 static const Axis axes[] = {
 	{ MODKEY, AxisUp,   spawn, SHCMD("volume-up_EXAMPLE") },
 	{ MODKEY, AxisDown, spawn, SHCMD("volume-down_EXAMPLE") },
+};
+
+static const Gesture gestures[] = {
+	// { MODKEY, SWIPE_LEFT, 4, shiftview, { .i = 1 } },
+	// { MODKEY, SWIPE_RIGHT, 4, shiftview, { .i = -1 } },
+	{ MODKEY, SWIPE_UP, 3, focusstack, {.i = 1} },
+	{ MODKEY, SWIPE_DOWN, 3, focusstack, {.i = -1} },
 };
