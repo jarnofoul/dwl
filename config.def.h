@@ -11,10 +11,10 @@ static int gaps                            = 1;  /* 1 means gaps between windows
 static const unsigned int gappx            = 10; /* gap pixel between windows */
 static const unsigned int borderpx         = 1;  /* border pixel of windows */
 static const unsigned int snap             = 32; /* snap pixel */
-static const float rootcolor[]             = COLOR(0x222222ff);
-static const float bordercolor[]           = COLOR(0x444444ff);
-static const float focuscolor[]            = COLOR(0x005577ff);
-static const float urgentcolor[]           = COLOR(0xff0000ff);
+static float rootcolor[]				   = COLOR(0x222222ff);
+static float bordercolor[]           	   = COLOR(0x444444ff);
+static float focuscolor[]            	   = COLOR(0x005577ff);
+static float urgentcolor[]           	   = COLOR(0xff0000ff);
 /* This conforms to the xdg-protocol. Set the alpha to zero to restore the old behavior */
 static const float fullscreen_bg[]         = {0.0f, 0.0f, 0.0f, 1.0f}; /* You can also use glsl colors */
 static const int respect_monitor_reserved_area = 0;  /* 1 to monitor center while respecting the monitor's reserved area, 0 to monitor center */
@@ -27,6 +27,8 @@ static float stickyborder = 1.0f; /* add this multiplied by borderpx to border w
 /* keyboard layout change notification for status bar */
 static const char  kblayout_file[] = "/tmp/dwl-keymap";
 static const char *kblayout_cmd[] = {"pkill", "-RTMIN+16", "someblocks", NULL};
+
+static const char *colorfile = "/tmp/colors-dwl";
 
 static const char *updatemon_cmd[] = {"touch", "/tmp/updatemon", NULL};
 

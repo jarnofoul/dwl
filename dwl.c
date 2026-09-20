@@ -351,6 +351,7 @@ static void keypress(struct wl_listener *listener, void *data);
 static void keypressmod(struct wl_listener *listener, void *data);
 static int keyrepeat(void *data);
 static void killclient(const Arg *arg);
+static void loadtheme(const char *filename);
 static void locksession(struct wl_listener *listener, void *data);
 static void mapnotify(struct wl_listener *listener, void *data);
 static void maximizenotify(struct wl_listener *listener, void *data);
@@ -369,6 +370,7 @@ static void pointerfocus(Client *c, LayerSurface* l, struct wlr_surface *surface
 static void printstatus(void);
 static void powermgrsetmode(struct wl_listener *listener, void *data);
 static void quit(const Arg *arg);
+static void reloadtheme(void);
 static void rendermon(struct wl_listener *listener, void *data);
 static void requestdecorationmode(struct wl_listener *listener, void *data);
 static void requeststartdrag(struct wl_listener *listener, void *data);
@@ -2106,6 +2108,8 @@ handlesig(int signo)
 		}
 	} else if (signo == SIGINT || signo == SIGTERM) {
 		quit(NULL);
+	} else if (signo == SIGRTMIN) {
+		reloadtheme();
 	}
 }
 
@@ -2323,6 +2327,40 @@ killclient(const Arg *arg)
 	Client *sel = focustop(selmon);
 	if (sel)
 		client_send_close(sel);
+}
+
+void
+parsecolor(FILE *fp, float color[4])
+{
+    char buf[16];
+    uint32_t hex;
+
+    if (!fgets(buf, sizeof buf, fp)) {
+        return;
+    }
+    if (sscanf(buf, "%x", &hex) == 1) {
+        color[0] = ((hex >> 24) & 0xFF) / 255.0f;
+        color[1] = ((hex >> 16) & 0xFF) / 255.0f;
+        color[2] = ((hex >> 8) & 0xFF) / 255.0f;
+        color[3] = (hex & 0xFF) / 255.0f;
+    }
+}
+
+void
+loadtheme(const char *filename)
+{
+    FILE *fp = fopen(filename, "r");
+    if (!fp) {
+        perror("fopen");
+        return;
+    }
+
+    parsecolor(fp, rootcolor);
+    parsecolor(fp, bordercolor);
+    parsecolor(fp, focuscolor);
+    parsecolor(fp, urgentcolor);
+
+    fclose(fp);
 }
 
 void
@@ -2862,6 +2900,23 @@ quit(const Arg *arg)
 }
 
 void
+reloadtheme(void)
+{
+    Client *c;
+
+    loadtheme(colorfile);
+
+    wl_list_for_each(c, &clients, link) {
+        if (c == focustop(selmon)) {
+            client_set_border_color(c, focuscolor);
+        } else {
+            client_set_border_color(c, c->isurgent ? urgentcolor : bordercolor);
+        }
+    }
+}
+
+
+void
 rendermon(struct wl_listener *listener, void *data)
 {
 	/* This function is called every time an output is ready to display a frame,
@@ -3163,7 +3218,7 @@ setsel(struct wl_listener *listener, void *data)
 void
 setup(void)
 {
-	int drm_fd, i, sig[] = {SIGCHLD, SIGINT, SIGTERM, SIGPIPE};
+	int drm_fd, i, sig[] = {SIGCHLD, SIGINT, SIGTERM, SIGPIPE, SIGRTMIN};
 	struct sigaction sa = {.sa_flags = SA_RESTART, .sa_handler = handlesig};
 	sigemptyset(&sa.sa_mask);
 
