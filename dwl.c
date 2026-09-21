@@ -3157,12 +3157,9 @@ setfullscreen(Client *c, int fullscreen)
 void
 setsticky(Client *c, int sticky)
 {
-	if(sticky && !c->issticky) {
-		c->issticky = 1;
-	} else if(!sticky && c->issticky) {
-		c->issticky = 0;
-		arrange(c->mon);
-	}
+	c->issticky = sticky;
+	c->bw = BORDERPX(c);
+	setfullscreen(c, c->isfullscreen);
 }
 
 void
