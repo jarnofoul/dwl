@@ -248,8 +248,11 @@ static const Button buttons[] = {
 };
 
 static const Axis axes[] = {
+	/* example of volume control:
 	{ MODKEY, AxisUp,   spawn, SHCMD("volume-up_EXAMPLE") },
-	{ MODKEY, AxisDown, spawn, SHCMD("volume-down_EXAMPLE") },
+	{ MODKEY, AxisDown, spawn, SHCMD("volume-down_EXAMPLE") }, */
+	{ 0, 0, NULL, {0} },
+	/* does nothing, but the array cannot be empty */
 };
 
 static const Gesture gestures[] = {
