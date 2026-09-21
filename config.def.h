@@ -113,6 +113,7 @@ static const int drag_lock = 1;
 static const int disable_while_typing = 1;
 static const int left_handed = 0;
 static const int middle_button_emulation = 0;
+static const int enable_primary_selection = 0;
 
 /* Natural scrolling */
 static const int trackpad_natural_scrolling = 0;
