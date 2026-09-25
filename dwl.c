@@ -2366,8 +2366,13 @@ void
 killclient(const Arg *arg)
 {
 	Client *sel = focustop(selmon);
-	if (sel)
+	if (sel && sel->scratchkey == 0)
 		client_send_close(sel);
+	else if (sel && sel->scratchkey != 0) {
+		sel->tags = 0;
+		focusclient(focustop(selmon), 1);
+		arrange(selmon);
+	}
 }
 
 void
