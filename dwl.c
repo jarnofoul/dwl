@@ -3663,7 +3663,7 @@ tile(Monitor *m)
 		e = 0;
 
 	if (n > m->nmaster)
-		mw = m->nmaster ? (int)roundf((m->w.width + gappx*e) * m->mfact) : 0;
+		mw = m->nmaster ? (unsigned int)roundf((m->w.width + gappx*e) * m->mfact) : gappx*e;
 	else
 		mw = m->w.width;
 	i = 0;
