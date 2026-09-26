@@ -442,6 +442,7 @@ static struct wlr_renderer *drw;
 static struct wlr_allocator *alloc;
 static struct wlr_compositor *compositor;
 static struct wlr_session *session;
+static uint32_t prev_tagset = 1;
 
 static struct wlr_xdg_shell *xdg_shell;
 static struct wlr_xdg_activation_v1 *activation;
@@ -1243,6 +1244,7 @@ closemon(Monitor *m)
 	int i = 0, nmons = wl_list_length(&mons);
 	if (!nmons) {
 		selmon = NULL;
+		prev_tagset = m->tagset[m->seltags];
 	} else if (m == selmon) {
 		do /* don't switch to disabled mons */
 			selmon = wl_container_of(mons.next, selmon, link);
@@ -1508,7 +1510,7 @@ createmon(struct wl_listener *listener, void *data)
 	/* Initialize monitor state using configured rules */
 	m->gaps = gaps;
 
-	m->tagset[0] = m->tagset[1] = 1;
+	m->tagset[0] = m->tagset[1] = prev_tagset;
 	for (r = monrules; r < END(monrules); r++) {
 		if (!r->name || strstr(wlr_output->name, r->name)) {
 			m->m.x = r->x;
