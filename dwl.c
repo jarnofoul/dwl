@@ -443,6 +443,7 @@ static struct wlr_allocator *alloc;
 static struct wlr_compositor *compositor;
 static struct wlr_session *session;
 static uint32_t prev_tagset = 1;
+static char pending_scratch = 0;
 
 static struct wlr_xdg_shell *xdg_shell;
 static struct wlr_xdg_activation_v1 *activation;
@@ -606,7 +607,12 @@ applyrules(Client *c)
 				&& (!r->id || strstr(appid, r->id))) {
 			c->isfloating = r->isfloating;
 			c->scratchkey = r->scratchkey;
-			newtags |= r->tags;
+			if (c->scratchkey && c->scratchkey == pending_scratch) {
+				newtags |= mon->tagset[mon->seltags];
+				pending_scratch = 0;
+			} else {
+				newtags |= r->tags;
+			}
 			c->isterm = r->isterm;
 			c->noswallow = r->noswallow;
 			i = 0;
@@ -3773,6 +3779,7 @@ togglescratch(const Arg *arg)
 		focusclient(c->tags == 0 ? focustop(selmon) : c, 1);
 		arrange(selmon);
 	} else{
+		pending_scratch = ((char**)arg->v)[0][0];
 		spawnscratch(arg);
 	}
 }
