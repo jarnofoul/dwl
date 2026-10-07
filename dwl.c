@@ -609,7 +609,6 @@ applyrules(Client *c)
 			c->scratchkey = r->scratchkey;
 			if (c->scratchkey && c->scratchkey == pending_scratch) {
 				newtags |= mon->tagset[mon->seltags];
-				pending_scratch = 0;
 			} else {
 				newtags |= r->tags;
 			}
@@ -3776,6 +3775,7 @@ togglescratch(const Arg *arg)
 	if (found) {
 		c->tags = VISIBLEON(c, selmon) ? 0 : selmon->tagset[selmon->seltags];
 
+		pending_scratch = 0;
 		focusclient(c->tags == 0 ? focustop(selmon) : c, 1);
 		arrange(selmon);
 	} else{
