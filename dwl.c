@@ -4145,7 +4145,7 @@ zoom(const Arg *arg)
 	/* If we passed sel, move c to the front; otherwise, move sel to the
 	 * front */
 	if (!sel)
-		sel = selmon->prevc ? selmon->prevc : c, c = tmp;
+		sel = selmon->prevc->image_capture_scene ? selmon->prevc : c, c = tmp;
 	wl_list_remove(&c->link);
 	wl_list_insert(&sel->link, &c->link);
 	wl_list_remove(&sel->link);
