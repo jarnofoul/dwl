@@ -60,10 +60,10 @@ static const char *const autostart[] = {
 
 static const Rule rules[] = {
 	/* app_id             title       tags mask     isfloating   isterm   noswallow   monitor	x	y	width	height scratckey*/
-	{ "foot",             NULL,       0,            0,           1,       1,          -1,		-1,	-1,	1000,	0.75,	0},
-	{ "Gimp_EXAMPLE",     NULL,       0,            1,           0,       0,          -1, 		-1,	-1,	-1,	-1,			0}, /* Start on currently visible tags floating, not tiled */
-	{ "firefox_EXAMPLE",  NULL,       1 << 8,       0,           0,       0,          -1, 		-1,	-1,	-1,	-1,			0}, /* Start on ONLY tag "9" */
-	{ NULL,               "scratchpad", 0,          1,           0,		   0,		  -1,		-1, -1, -1, -1,			's' },
+	{ "foot",             NULL,       0,            0,           1,       1,          -1,		-1,	-1,	1000,	0.75,	0, 0},
+	{ "Gimp_EXAMPLE",     NULL,       0,            1,           0,       0,          -1, 		-1,	-1,	-1,	-1,			0, 0}, /* Start on currently visible tags floating, not tiled */
+	{ "firefox_EXAMPLE",  NULL,       1 << 8,       0,           0,       0,          -1, 		-1,	-1,	-1,	-1,			0, 0}, /* Start on ONLY tag "9" */
+	{ NULL,               "scratchpad", 0,          1,           0,		   0,		  -1,		-1, -1, -1, -1,			's', 0},
     /* default/example rule: can be changed but cannot be eliminated; at least one rule must exist */
 };
 

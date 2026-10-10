@@ -13,6 +13,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <wayland-server-core.h>
+#include <wayland-util.h>
 #include <wlr/backend.h>
 #include <wlr/backend/libinput.h>
 #include <wlr/interfaces/wlr_keyboard.h>
@@ -92,7 +93,7 @@ enum { SWIPE_LEFT, SWIPE_RIGHT, SWIPE_DOWN, SWIPE_UP };
 /* enums */
 enum { CurNormal, CurPressed, CurMove, CurResize }; /* cursor */
 enum { XDGShell, LayerShell, X11 }; /* client types */
-enum { LyrBg, LyrBottom, LyrTile, LyrFloat, LyrTop, LyrFS, LyrUnmanaged, LyrOverlay,
+enum { LyrBg, LyrBottom, LyrTile, LyrFloat, LyrTop, LyrFS, LyrAlwaysTop, LyrUnmanaged, LyrOverlay,
 	LyrIMPopup, LyrBlock, NUM_LAYERS }; /* scene layers */
 enum { AxisUp, AxisRight, AxisDown, AxisLeft };
 
@@ -171,7 +172,7 @@ struct Client {
 #endif
 	unsigned int bw;
 	uint32_t tags;
-	int isfloating, isurgent, isfullscreen, isfakefullscreen;
+	int isfloating, isurgent, isfullscreen, isfakefullscreen, isalwaysontop;
 	int isterm, noswallow, issticky;
 	char scratchkey;
 	pid_t pid;
@@ -276,6 +277,7 @@ typedef struct {
 	float w;
 	float h;
 	char scratchkey;
+	int isalwaysontop;
 } Rule;
 
 typedef struct {
@@ -597,6 +599,7 @@ applyrules(Client *c)
 	int apply_resize = 0;
 
 	c->scratchkey = 0;
+	c->isalwaysontop = 0;
 	appid = client_get_appid(c);
 	title = client_get_title(c);
 
@@ -606,6 +609,7 @@ applyrules(Client *c)
 		if ((!r->title || strstr(title, r->title))
 				&& (!r->id || strstr(appid, r->id))) {
 			c->isfloating = r->isfloating;
+			c->isalwaysontop = r->isalwaysontop;
 			c->scratchkey = r->scratchkey;
 			if (c->scratchkey && c->scratchkey == pending_scratch) {
 				newtags |= mon->tagset[mon->seltags];
@@ -676,7 +680,7 @@ arrange(Monitor *m)
 	/* We move all clients (except fullscreen and unmanaged) to LyrTile while
 	 * in floating layout to avoid "real" floating clients be always on top */
 	wl_list_for_each(c, &clients, link) {
-		if (c->mon != m || c->scene->node.parent == layers[LyrFS])
+		if (c->mon != m || c->scene->node.parent == layers[LyrFS] || c->isalwaysontop)
 			continue;
 
 		wlr_scene_node_reparent(&c->scene->node,
@@ -2068,20 +2072,28 @@ focusstack(const Arg *arg)
 {
 	/* Focus the next or previous client (in tiling order) on selmon */
 	Client *c, *sel = focustop(selmon);
-	if (!sel || (sel->isfullscreen && !client_has_children(sel)))
-		return;
+	int n = 0;
+	if (!sel || (sel->isfullscreen && !client_has_children(sel))) {
+		wl_list_for_each(c, &sel->flink, flink) {
+			if (VISIBLEON(c, selmon) && c->isalwaysontop) {
+				n++;
+				break;
+			}
+		}
+		if (!n) return;
+	}
 	if (arg->i > 0) {
 		wl_list_for_each(c, &sel->link, link) {
 			if (&c->link == &clients)
 				continue; /* wrap past the sentinel node */
-			if (VISIBLEON(c, selmon))
+			if (VISIBLEON(c, selmon) && (!sel->isfullscreen || c->isalwaysontop))
 				break; /* found it */
 		}
 	} else {
 		wl_list_for_each_reverse(c, &sel->link, link) {
 			if (&c->link == &clients)
 				continue; /* wrap past the sentinel node */
-			if (VISIBLEON(c, selmon))
+			if (VISIBLEON(c, selmon) && (!sel->isfullscreen || c->isalwaysontop))
 				break; /* found it */
 		}
 	}
@@ -2518,7 +2530,7 @@ mapnotify(struct wl_listener *listener, void *data)
 unset_fullscreen:
 	m = c->mon ? c->mon : xytomon(c->geom.x, c->geom.y);
 	wl_list_for_each(w, &clients, link) {
-		if (w != c && w != p && w->isfullscreen && m == w->mon && (w->tags & c->tags))
+		if (w != c && w != p && w->isfullscreen && m == w->mon && (w->tags & c->tags) && !c->isalwaysontop)
 			setfullscreen(w, 0);
 	}
 }
@@ -3149,9 +3161,11 @@ setfloating(Client *c, int floating)
 	/* If in floating layout do not change the client's layer */
 	if (!c->mon || !client_surface(c)->mapped || !c->mon->lt[c->mon->sellt]->arrange)
 		return;
-	wlr_scene_node_reparent(&c->scene->node, layers[c->isfullscreen ||
+	wlr_scene_node_reparent(&c->scene->node, layers[c->isalwaysontop ? LyrAlwaysTop
+			: c->isfullscreen ||
 			(p && p->isfullscreen) ? LyrFS
 			: c->isfloating ? LyrFloat : LyrTile]);
+
 	arrange(c->mon);
 	printstatus();
 }
@@ -3159,14 +3173,12 @@ setfloating(Client *c, int floating)
 void
 setfullscreen(Client *c, int fullscreen)
 {
-	Client *p;
-
 	c->isfullscreen = fullscreen;
 	if (!c->mon || !client_surface(c)->mapped)
 		return;
 	c->bw = fullscreen ? 0 : BORDERPX(c);
 	client_set_fullscreen(c, fullscreen);
-	wlr_scene_node_reparent(&c->scene->node, layers[c->isfullscreen
+	wlr_scene_node_reparent(&c->scene->node, layers[c->isalwaysontop ? LyrAlwaysTop : c->isfullscreen
 			? LyrFS : c->isfloating ? LyrFloat : LyrTile]);
 
 	if (fullscreen) {
@@ -3176,9 +3188,6 @@ setfullscreen(Client *c, int fullscreen)
 		/* restore previous size instead of arrange for floating windows since
 		 * client positions are set by the user and cannot be recalculated */
 		resize(c, c->prev, 0);
-		wl_list_for_each(p, &clients, link)
-			if (VISIBLEON(p, selmon) && p->isfullscreen)
-				setfullscreen(p, 0);
 	}
 	arrange(c->mon);
 	printstatus();
