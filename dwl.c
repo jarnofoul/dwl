@@ -2911,7 +2911,7 @@ printstatus(void)
 	wl_list_for_each(m, &mons, link) {
 		occ = urg = 0;
 		wl_list_for_each(c, &clients, link) {
-			if (c->mon != m)
+			if (c->mon != m || c->swallowedby)
 				continue;
 			occ |= c->tags;
 			if (c->isurgent)
@@ -3580,6 +3580,7 @@ swallow(Client *c, Client *toswallow)
 	/* Swallow */
 	if (toswallow && !c->swallowing) {
 		c->swallowing = toswallow;
+		c->issticky = toswallow->issticky;
 		toswallow->swallowedby = c;
 		toswallow->mon = c->mon;
 		toswallow->mon = c->mon;
@@ -3601,6 +3602,7 @@ swallow(Client *c, Client *toswallow)
 		wl_list_remove(&c->swallowing->flink);
 		wl_list_insert(&c->flink, &c->swallowing->flink);
 		c->swallowing->tags = c->tags;
+		c->swallowing->issticky = c->issticky;
 		c->swallowing->swallowedby = NULL;
 		c->swallowing = NULL;
 		c->bw = BORDERPX(c);
@@ -3757,6 +3759,8 @@ togglesticky(const Arg *arg)
 	if(!c)
 		return;
 
+	if (c->swallowing)
+		setsticky(c->swallowing, !c->issticky);
 	setsticky(c, !c->issticky);
 }
 
